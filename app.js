@@ -268,7 +268,7 @@ S("Portada", "Programación Operativa 2026", () => {
     <div class="fuentes">
       Fuentes: programación operativa 2026 (${N(D.kpi.lineas)} líneas) ·
       REM series A, BM y D de enero a agosto de 2026 ·
-      REM serie P, corte de junio de 2026 ·
+      REM serie P, corte de junio de 2026, que es semestral ·
       META 2026 (5).xlsx, instrumento de cálculo del Departamento ·
       Resolución Exenta 04.481 que fija las metas sanitarias ·
       Resolución Exenta 5505 que aprueba la dotación 2026.
@@ -287,8 +287,8 @@ S("Portada", "Programación Operativa 2026", () => {
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
   f.appendChild(nodo(`<div class="alerta a-danger">
-    <strong>Lo más urgente.</strong> Al corte de junio el cumplimiento de las
-    metas Ley 19.813 es de ${P2(D.kpi.cumplimiento)}. Bajo 75% no se paga el
+    <strong>Lo más urgente.</strong> Con el avance a agosto el cumplimiento de
+    las metas Ley 19.813 es de ${P2(D.kpi.cumplimiento)}. Bajo 75% no se paga el
     componente variable a nadie. Faltan
     ${N2((D.kpi.umbral_bajo - D.kpi.cumplimiento)*100)} puntos para cruzar ese
     umbral, y hay una forma corta de conseguirlos.</div>`));
@@ -300,8 +300,8 @@ S("El tramo", "Hoy el componente variable no se pagaría", () => {
   const f = document.createDocumentFragment();
   f.appendChild(nodo(`<div class="enc"><h2>Hoy el componente variable no se
     pagaría</h2><p>La Ley 19.813 paga el 100% si el cumplimiento global supera
-    el 90%, el 50% entre 75% y 89,99%, y nada bajo 75%. Al corte de junio la
-    comuna está en ${P2(D.kpi.cumplimiento)}.</p></div>`));
+    el 90%, el 50% entre 75% y 89,99%, y nada bajo 75%. Con el avance a agosto
+    la comuna está en ${P2(D.kpi.cumplimiento)}.</p></div>`));
 
   const g = nodo(`<div class="grid g3"></div>`);
   g.appendChild(kpi("Cumplimiento a junio", P2(D.kpi.cumplimiento),
@@ -362,7 +362,7 @@ S("Metas Ley 19.813", "Metas sanitarias, una por una", () => {
          Avance ${P1(m.avance)} · meta comunal ${P0(m.metacom)}<br>
          Alcanza el <b>${P1(m.rel)}</b> de la meta`
   }));
-  f.appendChild(card("Porcentaje de la meta alcanzado al corte de junio",
+  f.appendChild(card("Porcentaje de la meta alcanzado",
     "Verde: cumple. Ámbar: entre 75% y 90%. Rojo: bajo 75%.",
     barrasH({datos, max:1.1, ref:{v:1, rot:"Meta cumplida"}, fmt:P0,
       etAncho:80, filaH:28, ancho:800,
@@ -374,14 +374,19 @@ S("Metas Ley 19.813", "Metas sanitarias, una por una", () => {
     id:`<b>Meta ${m.id}</b>`, nombre:m.nombre,
     meta: P0(m.metacom), av: P1(m.avance),
     num: N(m.num), den: N(m.den),
-    rel: P1(m.rel), est: badgeEstado(m.rel),
+    rel: m.rel != null ? P1(m.rel) : "—",
+    est: m.binaria ? `<span class="badge b-slate">Todo o nada</span>`
+                   : badgeEstado(m.rel),
+    corte: m.serie === "A" ? `<span class="badge b-inst">agosto</span>`
+         : m.serie === "P" ? `<span class="badge b-slate">junio</span>`
+         : `<span class="badge b-slate">fin de año</span>`,
     ap: `<b>${N2(m.aporte*100)}</b>`,
     pond: N2(m.pond*100),
-    falta: m.falta ? N(m.falta) : "—",
-    mes: m.por_mes ? `<b>${N(m.por_mes)}</b>` : "—"
+    falta: m.binaria ? "todo o nada" : (m.falta ? N(m.falta) : "—"),
+    mes: m.binaria ? "—" : (m.por_mes ? `<b>${N(m.por_mes)}</b>` : "—")
   }));
   filas.push({__tot:true, id:"", nombre:"Cumplimiento del componente variable",
-    meta:"", av:"", num:"", den:"", rel:"", est:"",
+    meta:"", av:"", num:"", den:"", rel:"", est:"", corte:"",
     ap:`<b>${N2(D.kpi.cumplimiento*100)}</b>`,
     pond:`<b>${N2(sumaPond*100)}</b>`,
     falta:`<b>${N(D.metas.reduce((a,m)=>a+(m.falta||0),0))}</b>`,
@@ -393,11 +398,12 @@ S("Metas Ley 19.813", "Metas sanitarias, una por una", () => {
     {t:"Meta", k:"meta", num:true}, {t:"Avance", k:"av", num:true},
     {t:"Numerador", k:"num", num:true}, {t:"Denominador", k:"den", num:true},
     {t:"% de la meta", k:"rel", num:true}, {t:"Estado", k:"est"},
+    {t:"Corte", k:"corte"},
     {t:"Aporte actual", k:"ap", num:true},
     {t:"Ponderación máxima", k:"pond", num:true},
     {t:"Faltan para la meta", k:"falta", num:true},
     {t:`KPI mensual (quedan ${D.meses_restantes})`, k:"mes", num:true},
-  ], filas, {nota:`Las metas 1, 2, 4, 4.1, 5 y 6 ponderan 12,5% cada una; las metas 3.1, 3.2, 7 y 8 ponderan 6,25%. Las metas 4.1 y 6 superan su meta, de modo que aportan más que su ponderación. El KPI mensual reparte lo que falta en los ${D.meses_restantes} meses que quedan del año, de septiembre a diciembre.`})));
+  ], filas, {nota:`Las metas 1, 2, 4, 4.1, 5 y 6 ponderan 12,5% cada una; las metas 3.1, 3.2, 7 y 8 ponderan 6,25%. Las metas 1, 3.1, 3.2 y 6 se nutren del REM serie A y están acumuladas hasta agosto; las metas 2, 4, 4.1, 5 y 7 vienen del REM serie P, que es semestral y no vuelve a cortar hasta diciembre. Las metas 4.1 y 6 superan su meta comunal y quedan topadas en el 100% de su ponderación: el exceso no compensa a las demás. La meta 8 va en cero porque es todo o nada y se define a fin de año. El KPI mensual reparte lo que falta en los ${D.meses_restantes} meses que quedan, de septiembre a diciembre.`})));
   return f;
 });
 
@@ -425,19 +431,24 @@ S("Cómo cruzar el 75%", "La forma más corta de cruzar el umbral", () => {
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
   const g = nodo(`<div class="grid g2"></div>`);
-  g.appendChild(kpi("Meta 8 · Consejos de desarrollo", "2 consejos",
-    "Faltan 2 de 3. Cada uno aporta 2,08 puntos: 4,17 en total", "inst"));
-  g.appendChild(kpi("Meta 1 · Desarrollo psicomotor", "5 niños",
-    "Recuperar 5 más de los 49 ya ingresados aporta 1,54 puntos", "inst"));
+  g.appendChild(kpi("Meta 8 · Plan de Salud Comunitaria",
+    `+${N2(D.metas_pond8*100)} pts`,
+    "Todo o nada. Ejecutado y evaluado participativamente antes de diciembre",
+    "inst"));
+  g.appendChild(kpi("Metas 3.1 y 3.2 · Odontológicas", "+3,23 pts",
+    "247 ingresos a control CERO y 19 niños de 6 años sin caries", "inst"));
   f.appendChild(g);
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
   f.appendChild(nodo(`<div class="alerta a-info">
-    <strong>La combinación más corta es administrativa, no clínica.</strong>
-    Completar los tres consejos de desarrollo de la meta 8 aporta 4,17 puntos,
-    y recuperar cinco niños más del desarrollo psicomotor aporta 1,54. Con esas
-    dos acciones el cumplimiento pasa de ${P2(D.kpi.cumplimiento)} a 75,3% y se
-    cruza al tramo 2.</div>`));
+    <strong>Tres acciones cruzan el umbral, y ninguna exige producción nueva
+    fuera de ritmo.</strong> Cerrar la meta 8 aporta
+    ${N2(D.metas_pond8*100)} puntos y lleva el avance a
+    ${P2(D.metas_total_con8)}. Completar la meta 3.1, que necesita 247 ingresos
+    más a control con enfoque de riesgo y viene produciendo 118 al mes, aporta
+    1,29. Completar la meta 3.2, que necesita 19 niños más y viene produciendo
+    cinco al mes, aporta 1,94. Con las tres el avance pasa de
+    ${P2(D.kpi.cumplimiento)} a 77,70% y entra al tramo 2.</div>`));
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
   f.appendChild(nodo(`<div class="alerta a-warn">
@@ -801,7 +812,7 @@ S("Qué decidir", "Lo que queda por resolver", () => {
 
   const items = [
     ["a-danger","Antes de cualquier informe",
-     "Completar los dos consejos de desarrollo que faltan de la meta 8 y recuperar cinco niños más del desarrollo psicomotor. Son las dos acciones más baratas para cruzar el 75% y que el componente variable se pague."],
+     "Ejecutar y evaluar participativamente el Plan de Salud Comunitaria de la meta 8 antes de diciembre, y completar las metas odontológicas 3.1 y 3.2, que ya vienen en ritmo. Son las tres acciones más baratas para cruzar el 75% y que el componente variable se pague."],
     ["a-warn","Antes del 30 de septiembre",
      "Decidir si la propuesta de dotación 2027 se presenta en el escenario base (63 jornadas) o con no presentación (82). Y depurar las horas indirectas de médico, tecnólogo médico, terapeuta ocupacional y trabajo social, que hoy superan la jornada anual disponible."],
     ["a-warn","Antes del 31 de octubre",
