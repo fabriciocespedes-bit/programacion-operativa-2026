@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Programación Operativa 2026 · DAS Pozo Almonte</title>
+<link rel="icon" href="sol-das-mini.png">
+<link rel="preload" href="fuentes/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fuentes/poppins-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="estilo.css?v=1789434294">
+</head>
+<body>
+<div class="franja" aria-hidden="true"></div>
+<div class="app">
+
+  <aside class="lateral no-print">
+    <div class="marca">
+      <img class="logo-lat" src="logo-municipalidad.png"
+           alt="Ilustre Municipalidad de Pozo Almonte">
+      <div class="sello">
+        <img src="sol-das-mini.png" alt="">
+        <div>
+          <h1>Control de Gestión Sanitaria</h1>
+          <p>Departamento de Salud · Pozo Almonte</p>
+        </div>
+      </div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Secciones"></nav>
+    <div class="pie-lat">
+      Flechas ← → para navegar<br>
+      Ctrl+P para imprimir todo
+    </div>
+  </aside>
+
+  <main class="principal">
+    <header class="barra no-print">
+      <div class="titulo" id="tituloBarra">Resumen</div>
+      <div class="ctrl">
+        <span class="badge b-slate tabular" id="contador">1 / 11</span>
+        <div class="prog"><i id="progBar" style="width:9%"></i></div>
+        <button class="btn btn-s" id="btnPrev" type="button">Anterior</button>
+        <button class="btn btn-p" id="btnNext" type="button">Siguiente</button>
+      </div>
+    </header>
+    <div class="lienzo" id="lienzo"></div>
+  </main>
+
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script src="datos.js?v=1789433427"></script>
+<script src="app.js?v=1789434138"></script>
+</body>
+</html>
