@@ -304,8 +304,9 @@ S("El tramo", "Hoy el componente variable no se pagaría", () => {
     la comuna está en ${P2(D.kpi.cumplimiento)}.</p></div>`));
 
   const g = nodo(`<div class="grid g3"></div>`);
-  g.appendChild(kpi("Cumplimiento a junio", P2(D.kpi.cumplimiento),
-    "Suma ponderada de las diez metas", "rojo"));
+  g.appendChild(kpi("Cumplimiento a agosto", P2(D.kpi.cumplimiento),
+    `Nueve metas evaluables. Con la meta 8 cerrada llega a ${P2(D.metas_total_con8)}`,
+    "rojo"));
   g.appendChild(kpi("Faltan para el tramo 2",
     N2((D.kpi.umbral_bajo - D.kpi.cumplimiento)*100) + " puntos",
     "Para cobrar el 50% del componente", "amarillo"));
@@ -316,9 +317,10 @@ S("El tramo", "Hoy el componente variable no se pagaría", () => {
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
   const datos = [
-    {et:"Cumplimiento a junio 2026", val:D.kpi.cumplimiento, color:C.rojo,
-     tip:`<b>Cumplimiento a junio</b><br>${P2(D.kpi.cumplimiento)}<br>
-          <span class="l">${D.kpi.tramo}</span>`},
+    {et:"Cumplimiento a agosto 2026", val:D.kpi.cumplimiento, color:C.rojo,
+     tip:`<b>Cumplimiento a agosto</b><br>${P2(D.kpi.cumplimiento)}<br>
+          <span class="l">${D.kpi.tramo}</span><br>
+          <span class="l">Metas del REM A a agosto · metas del REM P a junio</span>`},
     {et:"Umbral del tramo 2 · se paga el 50%", val:D.kpi.umbral_bajo,
      color:C.inst300, tip:`<b>Tramo 2</b><br>Desde ${P0(D.kpi.umbral_bajo)}`},
     {et:"Umbral del tramo 1 · se paga el 100%", val:D.kpi.umbral,
