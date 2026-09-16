@@ -522,16 +522,60 @@ S("IAAPS", "Índice de Actividad de la Atención Primaria", () => {
     19.813, que determinan el componente variable del desempeño colectivo.
     Corte de agosto. Fuente: ${I.fuente}.</p></div>`));
 
-  const g = nodo(`<div class="grid g3"></div>`);
-  g.appendChild(kpi("Indicadores que cumplen", `${I.cumplen} de ${I.total}`,
-    "Con meta evaluable en el instrumento",
-    I.cumplen/I.total >= 0.9 ? "verde" : "rojo"));
+  const g = nodo(`<div class="grid g4"></div>`);
+  g.appendChild(kpi("No alcanzaron el corte de julio",
+    `${I.en_riesgo_corte}`,
+    `De ${I.filas.filter(d=>d.acumula).length} que acumulan contra corte`,
+    I.en_riesgo_corte === 0 ? "verde" : "rojo"));
+  g.appendChild(kpi("Indicadores que cumplen la meta anual",
+    `${I.cumplen} de ${I.total}`,
+    "Medidos contra la meta de cierre",
+    I.cumplen/I.total >= 0.9 ? "verde" : "amarillo"));
   g.appendChild(kpi("Cumplimiento promedio", P1(I.promedio),
     "Topando cada indicador en 100%",
     I.promedio >= 0.9 ? "verde" : I.promedio >= 0.75 ? "amarillo" : "rojo"));
-  g.appendChild(kpi("Meses que quedan", `${I.meses_restantes}`,
-    "De septiembre a diciembre", "inst"));
+  g.appendChild(kpi("Próximo corte", `${P0(I.prox_fraccion)}`,
+    `Septiembre. Los cortes son 30%, 50%, 70% y 100%`, "inst"));
   f.appendChild(g);
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  f.appendChild(nodo(`<div class="alerta a-warn">
+    <strong>El instrumento no evalúa solo al cierre: evalúa cuatro veces.</strong>
+    Los cortes oficiales son mayo 30%, julio 50%, septiembre 70% y diciembre
+    100% de la meta anual, y están declarados en la propia planilla. El ritmo
+    esperado se acelera, de modo que repartir en partes iguales lo que falta
+    subestima la exigencia del corte más cercano.</div>`));
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+
+  const acum = I.filas.filter(d => d.acumula);
+  const filasCorte = acum.map(d => {
+    const c7 = d.cortes.find(c => c.corte === "julio");
+    const c9 = d.cortes.find(c => c.corte === "septiembre");
+    return {
+      id:`<b>IAAPS ${d.id}</b>`, nombre:d.nombre,
+      acum:N(d.num), jul:N(Math.round(c7.esperado)),
+      paso: c7.cumplido
+        ? `<span class="badge b-verde"><i class="pt"></i>Sí</span>`
+        : `<span class="badge b-rojo"><i class="pt"></i>No</span>`,
+      sep:N(Math.round(c9.esperado)),
+      falta: c9.brecha > 0 ? `<b>${N(Math.round(c9.brecha))}</b>` : "—",
+      origen: d.cortes_declarados
+        ? `<span class="badge b-slate">planilla</span>`
+        : `<span class="badge b-slate">derivado</span>`
+    };
+  });
+  f.appendChild(card("Ritmo contra los cortes oficiales",
+    "El corte de septiembre exige el 70% de la meta anual.",
+    tabla([
+      {t:"", k:"id"}, {t:"Indicador", k:"nombre"},
+      {t:"Acumulado a agosto", k:"acum", num:true},
+      {t:"Corte julio · 50%", k:"jul", num:true},
+      {t:"¿Lo alcanzó?", k:"paso"},
+      {t:"Corte septiembre · 70%", k:"sep", num:true},
+      {t:"Falta para septiembre", k:"falta", num:true},
+      {t:"Origen del corte", k:"origen"},
+    ], filasCorte, {nota:"«Planilla» significa que el valor esperado del corte viene declarado en META 2026; «derivado» que lo calculé aplicando el porcentaje del corte al objetivo anual, porque la planilla no lo trae. Los indicadores que no acumulan producción, como el porcentaje de derivación, no aparecen aquí porque un corte de avance no les aplica."})));
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
 
@@ -581,6 +625,85 @@ S("IAAPS", "Índice de Actividad de la Atención Primaria", () => {
     y las metas 4 y 5 de la Ley 19.813. Lo mismo ocurre entre el IAAPS 7 y la
     meta 1 de desarrollo psicomotor, y entre el IAAPS 17 y las metas
     odontológicas.</div>`));
+  return f;
+});
+
+/* 5c -------------------------------------------------------------- agenda */
+S("Agenda y NSP", "Inasistencia y uso de la agenda", () => {
+  const f = document.createDocumentFragment();
+  const A = D.agenda, PU = D.puente;
+  const comp = A.por_mes.filter(m => !m.parcial);
+  const tc = comp.reduce((a,m)=>a+m.citas,0);
+  const ti = comp.reduce((a,m)=>a+m.inasistencias,0);
+  const tcu = comp.reduce((a,m)=>a+m.cupos,0);
+  const tbl = comp.reduce((a,m)=>a+m.bloqueados,0);
+
+  f.appendChild(nodo(`<div class="enc"><h2>Inasistencia y uso de la
+    agenda</h2><p>Reporte de productividad por profesional, enero a agosto de
+    2026, en los cuatro establecimientos con población inscrita. Los datos de
+    origen traen identificación del funcionario; acá están agregados por
+    estamento y establecimiento, sin nombres ni RUN.</p></div>`));
+
+  const g = nodo(`<div class="grid g4"></div>`);
+  g.appendChild(kpi("NSP observado", P1(ti/tc),
+    `${N(ti)} inasistencias sobre ${N(tc)} citas`, "inst"));
+  g.appendChild(kpi("NSP supuesto en la programación", P0(PU.nsp_supuesto),
+    "Uniforme para todos los estamentos", "rojo"));
+  g.appendChild(kpi("Ocupación de la agenda", P1(tc/tcu),
+    "Citas sobre cupos programados", "verde"));
+  g.appendChild(kpi("Cupos bloqueados", N(tbl),
+    `${P1(tbl/(tcu+tbl))} del total de cupos`, "amarillo"));
+  f.appendChild(g);
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  f.appendChild(nodo(`<div class="alerta a-danger">
+    <strong>El supuesto de inasistencia está al doble del observado.</strong>
+    La programación asume ${P0(PU.nsp_supuesto)} uniforme y el registro muestra
+    ${P1(PU.nsp_citas)} ponderado por citas. Ese supuesto se usa en la
+    proyección de dotación 2027, de modo que la infla. Pero la corrección no es
+    pareja: ponderado por horas el NSP baja a ${P1(PU.nsp_horas)}, porque TENS
+    concentra un cuarto de las horas con una inasistencia de apenas
+    ${P1(D.agenda.por_estamento.find(e=>e.estamento==="TENS").inasistencias/
+        D.agenda.por_estamento.find(e=>e.estamento==="TENS").citas)}.</div>`));
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  f.appendChild(card("NSP mensual",
+    "La línea marca el supuesto de la programación.",
+    lineaT({
+      datos: A.por_mes.filter(m=>!m.parcial).map(m=>({
+        et: ["","ene","feb","mar","abr","may","jun","jul","ago"][m.mes],
+        v: +(m.inasistencias/m.citas*100).toFixed(1)})),
+      ref: PU.nsp_supuesto*100, refRot: "supuesto de la programación · 20%",
+      max: 24, ancho: 820, alto: 230,
+      fmt: v => N1(v)+"%", fmtEje: v => v+"%",
+      etiqueta: "Inasistencia mensual observada"})));
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  const est = A.por_estamento.filter(e => e.citas >= 200)
+                .slice().sort((a,b)=> (b.inasistencias/b.citas)-(a.inasistencias/a.citas));
+  f.appendChild(card("NSP por estamento",
+    "Ordenado de mayor a menor inasistencia. La línea marca el supuesto de 20%.",
+    barrasH({datos: est.map(e => ({
+      et:e.estamento, val:e.inasistencias/e.citas,
+      color: e.inasistencias/e.citas >= PU.nsp_supuesto ? C.rojo : C.inst,
+      tip:`<b>${e.estamento}</b><br>${N(e.inasistencias)} de ${N(e.citas)} citas<br>
+           <span class="l">Cupos ${N(e.cupos)} · bloqueados ${N(e.bloqueados)}</span>`
+    })), max:0.25, ref:{v:PU.nsp_supuesto, rot:"supuesto"}, fmt:P0,
+       etAncho:62, filaH:24, ancho:760, etiqueta:"Inasistencia por estamento"})));
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  f.appendChild(card("Detalle por establecimiento", "",
+    tabla([
+      {t:"Establecimiento", k:"e"}, {t:"Citas", k:"c", num:true},
+      {t:"Inasistencias", k:"i", num:true}, {t:"NSP", k:"n", num:true},
+      {t:"Cupos programados", k:"cu", num:true},
+      {t:"Ocupación", k:"o", num:true},
+      {t:"Cupos bloqueados", k:"b", num:true},
+    ], A.por_establecimiento.map(x => ({
+      e:x.establecimiento, c:N(x.citas), i:N(x.inasistencias),
+      n:P1(x.inasistencias/x.citas), cu:N(x.cupos),
+      o:P1(x.citas/x.cupos), b:N(x.bloqueados)
+    })), {nota:"La ocupación supera el 100% donde se cita por sobre los cupos programados, mediante sobrecupo y atención espontánea. No hay información sobre qué cuenta el sistema como cupo bloqueado: puede incluir feriados, capacitación y licencias, que son legítimos. Conviene aclararlo antes de leerlo como capacidad desaprovechada."})));
   return f;
 });
 
