@@ -779,7 +779,55 @@ S("Brechas de dotación", "Cuántas jornadas faltan, por estamento", () => {
     aprobada por la Resolución Exenta 5505. Una jornada completa equivalente son
     ${N1(D.meta.jce_horas)} horas al año.</p></div>`));
 
+  const BN = D.brecha_nsp;
+  const gE = nodo(`<div class="grid g3"></div>`);
+  gE.appendChild(kpi("Sin ajustar por inasistencia",
+    N2(BN.deficit["sin ajuste"]) + " JCE",
+    "Es la cifra que se informa hoy", "amarillo"));
+  gE.appendChild(kpi("Con el supuesto de 20%",
+    N2(BN.deficit["supuesto 20%"]) + " JCE",
+    "El supuesto que usa la programación", "rojo"));
+  gE.appendChild(kpi("Con la inasistencia observada",
+    N2(BN.deficit["observado"]) + " JCE",
+    `NSP real por estamento, enero a agosto`, "rojo"));
+  f.appendChild(gE);
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  f.appendChild(nodo(`<div class="alerta a-warn">
+    <strong>La brecha que se informa hoy no considera la inasistencia.</strong>
+    Compara capacidad contra horas requeridas suponiendo que toda hora agendada
+    se convierte en atención. Al reconocer que no ocurre, el déficit
+    <em>crece</em>: ${N2(BN.deficit["observado"])} JCE con el dato observado y
+    ${N2(BN.deficit["supuesto 20%"])} con el supuesto de 20%. El supuesto
+    sobreestima el déficit en ${N2(Math.abs(BN.deficit["supuesto 20%"] -
+    BN.deficit["observado"]))} JCE frente a lo medido, pero ambos son mayores
+    que los ${N2(BN.deficit["sin ajuste"])} vigentes. El ajuste se aplica solo a
+    las horas directas: las indirectas no se agendan con pacientes.</div>`));
+
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
+  const fe = BN.filas.slice().sort((x,y)=>x.jce_obs-y.jce_obs);
+  f.appendChild(card("Brecha por estamento en los tres escenarios",
+    "Jornadas completas equivalentes. Negativo es déficit.",
+    tabla([
+      {t:"Estamento", k:"e"},
+      {t:"Capacidad (h)", k:"cap", num:true},
+      {t:"Directas (h)", k:"dir", num:true},
+      {t:"Indirectas (h)", k:"ind", num:true},
+      {t:"NSP observado", k:"nsp", num:true},
+      {t:"JCE sin ajuste", k:"a", num:true},
+      {t:"JCE con 20%", k:"b", num:true},
+      {t:"JCE observado", k:"c", num:true},
+      {t:"Efecto del dato real", k:"d", num:true},
+    ], fe.map(r => ({
+      e:r.nom + (r.propio ? "" : " *"), cap:N(r.cap), dir:N(r.dir), ind:N(r.ind),
+      nsp:P1(r.nsp),
+      a:N2(r.jce_sin), b:N2(r.jce_20),
+      c:`<b>${N2(r.jce_obs)}</b>`,
+      d:(r.jce_obs - r.jce_20 >= 0 ? "+" : "") + N2(r.jce_obs - r.jce_20)
+    })), {nota:"Los estamentos marcados con asterisco no tienen volumen propio suficiente en el registro de agenda y usan el NSP global. Nutrición es el único donde el dato real empeora la brecha respecto del supuesto, porque su inasistencia de 21,3% supera el 20% asumido. Tecnólogo médico no tiene horas directas programadas: toda su carga es indirecta, de modo que el ajuste no lo mueve."})));
+
   const b = D.brechas.slice().sort((x,y)=>x.jce-y.jce);
+  f.appendChild(nodo(`<div style="height:14px"></div>`));
   f.appendChild(card("Brecha en jornadas completas equivalentes",
     "Rojo: la dotación no alcanza a cubrir lo programado. Azul: hay holgura.",
     barrasH({datos:b.map(r=>({
@@ -792,8 +840,9 @@ S("Brechas de dotación", "Cuántas jornadas faltan, por estamento", () => {
 
   f.appendChild(nodo(`<div style="height:14px"></div>`));
   const g = nodo(`<div class="grid g3"></div>`);
-  g.appendChild(kpi("Déficit clínico total", N2(D.kpi.deficit_clinico)+" JCE",
-    "Sumando sólo los estamentos en déficit", "rojo"));
+  g.appendChild(kpi("Déficit del escenario base", N2(D.kpi.deficit_clinico)+" JCE",
+    "Sin ajustar por inasistencia · el detalle de abajo usa este escenario",
+    "amarillo"));
   g.appendChild(kpi("Dotación aprobada 2026", N(D.kpi.dotacion_horas)+" h",
     `${N2(D.kpi.dotacion_jornadas)} jornadas de 44 horas`, "inst"));
   g.appendChild(kpi("Horas vacantes sin proveer",
